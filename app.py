@@ -1,3 +1,6 @@
+import streamlit as st
+st.title("Civic Pulse AI")
+st.success("The backend is running perfectly!")
 from flask import Flask, render_template, request, jsonify
 from gemini_classifier import classify_issue
 import uuid, json, os
@@ -64,5 +67,5 @@ def get_complaints():
     complaints.reverse()
     return jsonify(complaints)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+#if __name__ == "__main__":
+ #   app.run(debug=True)
