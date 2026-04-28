@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civic Pulse - Smart Resource Allocation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #faf9f6; color: #1d3557; scroll-behavior: smooth; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); }
+        .badge-locked { filter: grayscale(1) opacity(0.3); }
+        .badge-unlocked { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
+        .progress-bar { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .impact-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" id="logo-home">
+                    <span class="text-2xl mr-2">💓</span>
+                    <span class="font-bold text-xl tracking-tight text-[#1d3557]">Civic Pulse</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <button id="nav-how" class="hidden md:inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-[#2d6a4f] transition-colors">How it Works</button>
+                    <button id="nav-impact" class="hidden md:inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-[#2d6a4f] transition-colors">Impact Stories</button>
+                    
+                    <button id="btn-profile" class="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 p-2 pr-4 rounded-full border border-gray-200 transition-all">
+                        <div class="h-8 w-8 bg-[#2d6a4f] text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">👤</div>
+                        <span class="text-xs font-bold text-gray-600 hidden sm:block uppercase tracking-wider">My Hub</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full">
+        
+        <div id="view-citizen" class="fade-in block">
+            
+            <section id="hero-section" class="bg-gradient-to-b from-white to-[#faf9f6] py-16 px-4">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h1 class="text-4xl md:text-5xl font-extrabold mb-4 text-[#1d3557]">Report Community Problems Anonymously <span class="text-[#2d6a4f]"> AI Routes Them to the Right NGO.</span></h1>
+                    <p class="text-gray-500 text-lg mb-10 max-w-2xl mx-auto">Help fix your community while staying 100% anonymous. Every report moves you up the Civic Leaderboard.</p>
+                    
+                    <div id="step-1-selection" class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                        <div id="btn-categorized" class="bg-white rounded-2xl shadow-sm p-8 cursor-pointer hover:shadow-xl transition-all border border-gray-100 hover:border-[#2d6a4f] group">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-green-50 p-3 rounded-xl group-hover:bg-[#2d6a4f] transition-colors">
+                                    <span class="text-3xl group-hover:filter group-hover:brightness-0 group-hover:invert">🗂️</span>
+                                </div>
+                                <h2 class="text-xl font-bold ml-4">Categorized Report</h2>
+                            </div>
+                            <p class="text-sm text-gray-400">Directly route to niches like Environment or Healthcare.</p>
+                        </div>
+                        <div id="btn-quick" class="bg-white rounded-2xl shadow-sm p-8 cursor-pointer hover:shadow-xl transition-all border border-gray-100 hover:border-[#1d3557] group">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-blue-50 p-3 rounded-xl group-hover:bg-[#1d3557] transition-colors">
+                                    <span class="text-3xl group-hover:filter group-hover:brightness-0 group-hover:invert">⚡</span>
+                                </div>
+                                <h2 class="text-xl font-bold ml-4">Quick Route</h2>
+                            </div>
+                            <p class="text-sm text-gray-400">Our smart algorithm handles the allocation for you.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="step-2-categories" class="hidden max-w-5xl mx-auto px-4 py-12 fade-in">
+                <div class="flex items-center mb-8">
+                    <button class="btn-back bg-gray-100 p-2 rounded-full">🔙</button>
+                    <h2 class="text-2xl font-bold ml-4">Issue Niche</h2>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Environment & Conservation">
+                        <span class="text-3xl mb-2">🌲</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Environment</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Elder Care">
+                        <span class="text-3xl mb-2">👵</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Elderly Care</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Animal Welfare">
+                        <span class="text-3xl mb-2">🐕</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Animal Welfare</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Infrastructure">
+                        <span class="text-3xl mb-2">🛣️</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Infrastructure</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Child Welfare">
+                        <span class="text-3xl mb-2">👶</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Child Welfare</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Hunger Relief">
+                        <span class="text-3xl mb-2">🍲</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Hunger</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Healthcare">
+                        <span class="text-3xl mb-2">🏥</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Healthcare</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Education">
+                        <span class="text-3xl mb-2">📚</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Education</span>
+                    </button>
+                    <button class="cat-select bg-white p-6 rounded-xl border border-gray-100 hover:border-[#2d6a4f] flex flex-col items-center" data-cat="Women Safety">
+                        <span class="text-3xl mb-2">🛡️</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Women Safety</span>
+                    </button>
+                    <button class="cat-select bg-[#1d3557] text-white p-6 rounded-xl flex flex-col items-center hover:bg-[#2a4d7d] transition" data-cat="General Support" id="btn-others">
+                        <span class="text-3xl mb-2">❓</span><span class="text-xs font-bold uppercase tracking-tighter text-center">Others</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="step-3-form" class="hidden max-w-2xl mx-auto px-4 py-12 fade-in">
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back bg-gray-50 p-2 rounded-full">🔙</button>
+                        <div id="form-badge" class="ml-auto bg-[#2d6a4f] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Allocation Engine Active</div>
+                    </div>
+                    <form id="issue-form" class="space-y-6">
+                        <input type="hidden" id="selected-category" value="AI Route">
+                        <div>
+                            <label class="block text-xs font-black text-gray-400 uppercase mb-2">Location</label>
+                            <input type="text" id="input-location" required class="w-full border-b-2 border-gray-100 py-2 focus:border-[#2d6a4f] outline-none" placeholder="Where is it?">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-400 uppercase mb-2">Description</label>
+                            <textarea id="input-desc" required rows="4" class="w-full border border-gray-100 rounded-xl py-3 px-4 focus:ring-2 focus:ring-[#2d6a4f] outline-none" placeholder="Provide details..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-black text-gray-400 uppercase mb-2">Evidence / Photo (Optional)</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-100 border-dashed rounded-xl hover:border-[#2d6a4f] transition bg-gray-50/50 group cursor-pointer relative overflow-hidden">
+                                <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/png, image/jpeg" title="Click to upload an image">
+                                <div class="space-y-1 text-center relative z-0">
+                                    <span class="text-3xl group-hover:scale-110 transition-transform block">📸</span>
+                                    <div class="flex text-sm text-gray-600 mt-2 justify-center">
+                                        <span class="relative font-medium text-[#2d6a4f] group-hover:text-[#1d3557]">Upload a file</span>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-[10px] text-gray-400">PNG, JPG up to 10MB</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="btn-finalize" type="submit" class="w-full bg-[#2d6a4f] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 disabled:opacity-75 disabled:cursor-not-allowed">
+                            Finalize & Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="success-message" class="hidden max-w-md mx-auto py-20 px-4 text-center fade-in">
+                <div class="text-6xl mb-6">🏆</div>
+                <h3 class="text-2xl font-bold text-[#1d3557] mb-2">Report Captured!</h3>
+                <p class="text-gray-500 mb-2">You've just earned +10 Pulse Points.</p>
+                <p class="text-gray-400 text-xs mb-8 italic">Your Pulse ID: <span id="confirm-id" class="font-bold"></span></p>
+                <button id="btn-submit-another" class="bg-[#1d3557] text-white px-8 py-3 rounded-full font-semibold">Home</button>
+            </div>
+
+            <section id="how-it-works" class="max-w-6xl mx-auto px-4 py-16 border-t border-gray-100 bg-[#faf9f6]">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-[#1d3557]">How Civic Pulse Works</h2>
+                    <p class="text-gray-500 mt-2">Smart resource allocation in 4 simple steps.</p>
+                </div>
+                
+                <div class="relative max-w-5xl mx-auto">
+                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-[#e8f3ee] -translate-y-1/2 z-0"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
+                        <div class="bg-white p-6 rounded-2xl border border-[#e8f3ee] shadow-sm text-center relative group hover:-translate-y-2 transition-transform">
+                            <div class="w-16 h-16 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-white shadow-sm transition-colors group-hover:bg-[#1d3557] group-hover:text-white">📱</div>
+                            <h3 class="font-bold text-[#1d3557] mb-2">1. You Pulse It</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">Spot a civic issue? Tell us what and where. We protect your identity with a unique anonymous ID.</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-[#e8f3ee] shadow-sm text-center relative group hover:-translate-y-2 transition-transform">
+                            <div class="w-16 h-16 mx-auto bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-white shadow-sm transition-colors group-hover:bg-amber-500 group-hover:text-white">🧠</div>
+                            <h3 class="font-bold text-[#1d3557] mb-2">2. Smart Route</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">Our system analyzes your report and instantly routes it to the correct local NGO niche for the job.</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-[#e8f3ee] shadow-sm text-center relative group hover:-translate-y-2 transition-transform">
+                            <div class="w-16 h-16 mx-auto bg-green-50 text-[#2d6a4f] rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-white shadow-sm transition-colors group-hover:bg-[#2d6a4f] group-hover:text-white">🤝</div>
+                            <h3 class="font-bold text-[#1d3557] mb-2">3. NGO Action</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">The designated NGO receives the verified alert on their dashboard and dispatches volunteers.</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-[#e8f3ee] shadow-sm text-center relative group hover:-translate-y-2 transition-transform">
+                            <div class="w-16 h-16 mx-auto bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-white shadow-sm transition-colors group-hover:bg-purple-600 group-hover:text-white">🏆</div>
+                            <h3 class="font-bold text-[#1d3557] mb-2">4. Loop Closed</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">The problem is fixed! You earn Civic Points towards your next badge, and the community thrives.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="active-pulses" class="max-w-6xl mx-auto px-4 py-16 border-t border-gray-100">
+                <div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end">
+                    <div>
+                        <h2 class="text-3xl font-bold text-[#1d3557]">Needs Attention (Pending)</h2>
+                        <p class="text-gray-400 italic mt-1">Upvote urgent pending issues to help our smart-router notify NGOs to prioritize them.</p>
+                    </div>
+                    <span class="mt-4 md:mt-0 text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest border border-amber-100">Community Voting Live</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="active-pulses-container">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col relative transition-all hover:-translate-y-1">
+                        <div class="absolute -top-3 -right-3 hidden priority-badge">
+                            <span class="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md animate-pulse">🔥 Priority Alert Sent</span>
+                        </div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded">Environment</span>
+                            <span class="text-[10px] text-gray-400 font-mono">ID: CP-9012</span>
+                        </div>
+                        <h3 class="font-bold text-[#1d3557] mb-2 leading-tight">Toxic dumping in river</h3>
+                        <p class="text-xs text-gray-500 mb-4 flex-grow">Unknown factory dumping chemicals into the local river stream. Urgent investigation needed.</p>
+                        <div class="text-[10px] text-gray-400 mb-4 font-medium">📍 West River Bank</div>
+                        
+                        <div class="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Pending NGO Pickup</span>
+                            <div class="flex items-center space-x-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                <button class="upvote-btn text-gray-400 hover:text-green-600 transition text-sm p-1">👍</button>
+                                <span class="font-bold text-[#1d3557] text-sm vote-count">4</span>
+                                <button class="downvote-btn text-gray-400 hover:text-red-600 transition text-sm p-1">👎</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="impact-feed" class="max-w-6xl mx-auto px-4 py-16 border-t border-gray-100">
+                <div class="mb-12">
+                    <h2 class="text-3xl font-bold text-[#1d3557]">Community Successes</h2>
+                    <p class="text-gray-400 italic">Work completed by NGOs across the city. This is why we Pulse.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col impact-card">
+                        <div class="h-44 bg-[#e8f3ee] flex items-center justify-center"><span class="text-6xl">🐕</span></div>
+                        <div class="p-6">
+                            <p class="text-[10px] text-gray-400 font-bold mb-2 uppercase tracking-widest">Completed • ID: CP-1209</p>
+                            <h3 class="font-bold text-[#1d3557] mb-2 text-lg leading-tight">Puppy Rescue at Park Ave</h3>
+                            <p class="text-xs text-gray-500">Stray puppies were safely moved to 'PawsHome' NGO following an anonymous report.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col impact-card">
+                        <div class="h-44 bg-[#fdf2f2] flex items-center justify-center"><span class="text-6xl">🛣️</span></div>
+                        <div class="p-6">
+                            <p class="text-[10px] text-gray-400 font-bold mb-2 uppercase tracking-widest">Resolved • ID: CP-7721</p>
+                            <h3 class="font-bold text-[#1d3557] mb-2 text-lg leading-tight">Main Street Debris Clearance</h3>
+                            <p class="text-xs text-gray-500">Construction debris blocking the path was cleared by 'CityFix' NGO in 24 hours.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col impact-card">
+                        <div class="h-44 bg-[#fffbeb] flex items-center justify-center"><span class="text-6xl">🍲</span></div>
+                        <div class="p-6">
+                            <p class="text-[10px] text-gray-400 font-bold mb-2 uppercase tracking-widest">Delivered • ID: CP-3490</p>
+                            <h3 class="font-bold text-[#1d3557] mb-2 text-lg leading-tight">Surplus Food Collection</h3>
+                            <p class="text-xs text-gray-500">A local market's surplus food was collected and distributed to those in need via 'FoodPulse' NGO.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="view-dashboard" class="hidden px-4 sm:px-8 py-10 fade-in">
+            <div class="max-w-7xl mx-auto">
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-8 flex justify-between items-center">
+                    <p class="text-[10px] font-black text-amber-800 uppercase tracking-widest">Administrative Resource View (Demo Mode)</p>
+                    <button id="btn-exit-demo" class="text-[10px] font-bold text-amber-900 underline">Exit</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                        <div class="text-[10px] font-black text-gray-400 uppercase mb-1">Incoming Pulse Count</div>
+                        <div class="text-3xl font-bold text-[#1d3557]" id="dashboard-count">1,248</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                        <div class="text-[10px] font-black text-gray-400 uppercase mb-1">Smart Allocation Rate</div>
+                        <div class="text-3xl font-bold text-[#2d6a4f]">98.2%</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-white p-8 rounded-2xl border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-6">Niche Distribution</h3>
+                        <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-6">Weekly Pulse Activity</h3>
+                        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <div class="bg-gray-50 px-8 py-4 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm">Smart Feed</h3>
+                        <span class="text-[10px] font-bold text-green-600">LIVE ROUTING</span>
+                    </div>
+                    <div class="divide-y divide-gray-100" id="live-feed"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="profile-modal" class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden fade-in max-h-[90vh] overflow-y-auto">
+            <div class="p-8 border-b flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 class="text-2xl font-bold text-[#1d3557]">My Hub</h2>
+                    <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">ID: <span id="hub-user-id">CP-XXXX</span></p>
+                </div>
+                <button id="close-profile" class="text-gray-400 hover:text-red-500 text-2xl font-bold">×</button>
+            </div>
+            
+            <div class="p-8 space-y-8">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Civic Achievement</h3>
+                        <span class="text-[10px] font-bold text-[#2d6a4f] bg-green-50 px-2 py-0.5 rounded">Rank: <span id="rank-text">Novice</span></span>
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex justify-between text-[10px] font-bold text-gray-500 mb-2">
+                            <span>Next Rank Progress</span>
+                            <span id="progress-val">0 / 10 Reports</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+                            <div id="progress-bar-inner" class="progress-bar bg-[#2d6a4f] h-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div id="badge-1" class="badge-locked p-4 bg-gray-50 rounded-2xl flex flex-col items-center text-center">
+                            <span class="text-2xl mb-1">🥉</span>
+                            <span class="text-[9px] font-black uppercase tracking-tighter">Citizen</span>
+                        </div>
+                        <div id="badge-2" class="badge-locked p-4 bg-gray-50 rounded-2xl flex flex-col items-center text-center">
+                            <span class="text-2xl mb-1">🥈</span>
+                            <span class="text-[9px] font-black uppercase tracking-tighter">Guardian</span>
+                        </div>
+                        <div id="badge-3" class="badge-locked p-4 bg-gray-50 rounded-2xl flex flex-col items-center text-center">
+                            <span class="text-2xl mb-1">🥇</span>
+                            <span class="text-[9px] font-black uppercase tracking-tighter">Legend</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#faf9f6] p-4 rounded-2xl border border-gray-100">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Community Pulse</h3>
+                    <p class="text-[11px] text-gray-500 mb-4 leading-relaxed">Want to see the collective impact of your reports? Explore how our NGO network is transforming the city.</p>
+                    <button id="btn-hub-impact" class="w-full bg-[#2d6a4f] text-white text-[10px] font-bold py-3 rounded-xl hover:bg-[#1d3557] transition-all uppercase tracking-widest">
+                        View Community Success Stories
+                    </button>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">My History</h3>
+                    <div id="user-reports-list" class="space-y-3 text-center py-4 text-gray-400 text-[10px] italic">
+                        Start reporting to see your history.
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t">
+                    <button id="trigger-ngo" class="w-full bg-gray-50 text-gray-400 text-[9px] font-black py-2 rounded-lg hover:bg-amber-50 hover:text-amber-700 uppercase tracking-widest">
+                        Demo Console (For Judges)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const pulseID = 'CP-' + Math.floor(1000 + Math.random() * 9000);
+        let userReportsCount = 0;
+        const reportsHistory = [];
+
+        // UI Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            const hubUserIdEl = document.getElementById('hub-user-id');
+            const confirmIdEl = document.getElementById('confirm-id');
+            if(hubUserIdEl) hubUserIdEl.textContent = pulseID;
+            if(confirmIdEl) confirmIdEl.textContent = pulseID;
+        });
+
+        // Navigation Elements
+        const btnProfile = document.getElementById('btn-profile');
+        const profileModal = document.getElementById('profile-modal');
+        const closeProfile = document.getElementById('close-profile');
+        const viewCitizen = document.getElementById('view-citizen');
+        const viewDashboard = document.getElementById('view-dashboard');
+        const triggerNgo = document.getElementById('trigger-ngo');
+        const btnExitDemo = document.getElementById('btn-exit-demo');
+        
+        // Scroll Anchors
+        const navImpact = document.getElementById('nav-impact');
+        const navHow = document.getElementById('nav-how');
+        const btnHubImpact = document.getElementById('btn-hub-impact');
+
+        // Smooth Scroll Logic
+        function scrollToSection(id) {
+            resetSteps(); 
+            profileModal.classList.add('hidden'); 
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        navImpact.addEventListener('click', () => scrollToSection('impact-feed'));
+        btnHubImpact.addEventListener('click', () => scrollToSection('impact-feed'));
+        navHow.addEventListener('click', () => scrollToSection('how-it-works'));
+
+        btnProfile.addEventListener('click', () => profileModal.classList.remove('hidden'));
+        closeProfile.addEventListener('click', () => profileModal.classList.add('hidden'));
+        
+        triggerNgo.addEventListener('click', () => {
+            profileModal.classList.add('hidden');
+            viewCitizen.classList.add('hidden');
+            viewDashboard.classList.remove('hidden');
+            initCharts();
+        });
+
+        btnExitDemo.addEventListener('click', () => {
+            viewDashboard.classList.add('hidden');
+            viewCitizen.classList.remove('hidden');
+        });
+
+        // Report Flow Logic
+        const heroSection = document.getElementById('hero-section');
+        const step2 = document.getElementById('step-2-categories');
+        const step3 = document.getElementById('step-3-form');
+        const successMsg = document.getElementById('success-message');
+        const impactFeed = document.getElementById('impact-feed');
+        const howItWorks = document.getElementById('how-it-works');
+        const activePulses = document.getElementById('active-pulses');
+
+        function resetSteps() {
+            heroSection.classList.remove('hidden');
+            step2.classList.add('hidden');
+            step3.classList.add('hidden');
+            successMsg.classList.add('hidden');
+            impactFeed.classList.remove('hidden');
+            howItWorks.classList.remove('hidden');
+            if(activePulses) activePulses.classList.remove('hidden');
+            viewCitizen.classList.remove('hidden');
+            viewDashboard.classList.add('hidden');
+        }
+
+        document.getElementById('logo-home').addEventListener('click', () => {
+            resetSteps();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+        document.getElementById('btn-submit-another').addEventListener('click', resetSteps);
+
+        document.getElementById('btn-categorized').addEventListener('click', () => {
+            heroSection.classList.add('hidden');
+            impactFeed.classList.add('hidden');
+            howItWorks.classList.add('hidden');
+            if(activePulses) activePulses.classList.add('hidden');
+            step2.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-quick').addEventListener('click', () => {
+            heroSection.classList.add('hidden');
+            impactFeed.classList.add('hidden');
+            howItWorks.classList.add('hidden');
+            if(activePulses) activePulses.classList.add('hidden');
+            step3.classList.remove('hidden');
+            document.getElementById('selected-category').value = "Smart Route";
+        });
+
+        document.querySelectorAll('.cat-select').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('selected-category').value = btn.getAttribute('data-cat');
+                step2.classList.add('hidden');
+                step3.classList.remove('hidden');
+            });
+        });
+
+        document.querySelectorAll('.btn-back').forEach(btn => btn.addEventListener('click', resetSteps));
+
+        // Form Submit connected to Backend
+        const form = document.getElementById('issue-form');
+        const reportsList = document.getElementById('user-reports-list');
+        const liveFeed = document.getElementById('live-feed');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('btn-finalize');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = "Routing... Please wait";
+            submitBtn.disabled = true;
+
+            const cat = document.getElementById('selected-category').value;
+            const desc = document.getElementById('input-desc').value;
+            const loc = document.getElementById('input-location').value;
+
+            try {
+                // Send to Flask Backend
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: cat, problem: desc, location: loc })
+                });
+                
+                const result = await response.json();
+                
+                // Get real assigned category and ID
+                const finalCategory = result.category;
+                const finalId = result.id;
+
+                userReportsCount++;
+                reportsHistory.push({ cat: finalCategory, desc, loc, status: 'Allocating' });
+                
+                updateHubUI();
+
+                document.getElementById('confirm-id').textContent = finalId;
+
+                const feedItem = document.createElement('div');
+                feedItem.className = 'p-6 hover:bg-gray-50 transition fade-in';
+                feedItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-black text-[#2d6a4f] uppercase tracking-widest">${finalCategory}</span>
+                        <span class="text-[10px] text-gray-400 font-mono">ID: ${finalId}</span>
+                    </div>
+                    <p class="text-sm font-bold text-[#1d3557]">${desc}</p>
+                    <p class="text-[10px] text-gray-400">📍 ${loc}</p>
+                `;
+                if(liveFeed) liveFeed.insertBefore(feedItem, liveFeed.firstChild);
+
+                const activePulseContainer = document.getElementById('active-pulses-container');
+                if (activePulseContainer) {
+                    const newPulse = document.createElement('div');
+                    newPulse.className = 'bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col relative transition-all hover:-translate-y-1 fade-in';
+                    newPulse.innerHTML = `
+                        <div class="absolute -top-3 -right-3 hidden priority-badge">
+                            <span class="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md animate-pulse">🔥 Priority Alert Sent</span>
+                        </div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded">${finalCategory}</span>
+                            <span class="text-[10px] text-gray-400 font-mono">ID: ${finalId}</span>
+                        </div>
+                        <h3 class="font-bold text-[#1d3557] mb-2 leading-tight">${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}</h3>
+                        <p class="text-xs text-gray-500 mb-4 flex-grow">${desc}</p>
+                        <div class="text-[10px] text-gray-400 mb-4 font-medium">📍 ${loc}</div>
+                        
+                        <div class="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Pending NGO Pickup</span>
+                            <div class="flex items-center space-x-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                <button class="upvote-btn text-gray-400 hover:text-green-600 transition text-sm p-1">👍</button>
+                                <span class="font-bold text-[#1d3557] text-sm vote-count">0</span>
+                                <button class="downvote-btn text-gray-400 hover:text-red-600 transition text-sm p-1">👎</button>
+                            </div>
+                        </div>
+                    `;
+                    activePulseContainer.insertBefore(newPulse, activePulseContainer.firstChild);
+                }
+
+                step3.classList.add('hidden');
+                successMsg.classList.remove('hidden');
+
+            } catch(err) {
+                console.error(err);
+                alert("Something went wrong with the server. Please try again.");
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Handle Voting System Logic (UPDATED FIX)
+        document.addEventListener('click', function(e) {
+            const upBtn = e.target.closest('.upvote-btn');
+            const downBtn = e.target.closest('.downvote-btn');
+            
+            if (upBtn || downBtn) {
+                const container = e.target.closest('.bg-white');
+                
+                // Check if user already voted
+                if (container.dataset.hasVoted === 'true') {
+                    alert("You have already voted on this issue!");
+                    return; 
+                }
+
+                const countSpan = container.querySelector('.vote-count');
+                const badge = container.querySelector('.priority-badge');
+                
+                let currentVotes = parseInt(countSpan.textContent);
+                
+                if (upBtn) {
+                    currentVotes++;
+                } else if (downBtn) {
+                    currentVotes--;
+                }
+                
+                countSpan.textContent = currentVotes;
+
+                // Lock card and dim buttons
+                container.dataset.hasVoted = 'true';
+                container.querySelector('.upvote-btn').classList.add('opacity-30', 'cursor-not-allowed');
+                container.querySelector('.downvote-btn').classList.add('opacity-30', 'cursor-not-allowed');
+
+                if (currentVotes >= 5) {
+                    badge.classList.remove('hidden');
+                    container.classList.add('border-red-300');
+                } else {
+                    badge.classList.add('hidden');
+                    container.classList.remove('border-red-300');
+                }
+            }
+        });
+
+        function updateHubUI() {
+            const percentage = Math.min((userReportsCount / 10) * 100, 100);
+            const progressBar = document.getElementById('progress-bar-inner');
+            const progressVal = document.getElementById('progress-val');
+            if(progressBar) progressBar.style.width = percentage + '%';
+            if(progressVal) progressVal.textContent = `${userReportsCount} / 10 Reports`;
+
+            if (userReportsCount >= 1) {
+                const b1 = document.getElementById('badge-1');
+                if(b1) { b1.classList.remove('badge-locked'); b1.classList.add('badge-unlocked', 'bg-green-50'); }
+                const rankText = document.getElementById('rank-text');
+                if(rankText) rankText.textContent = "Active Citizen";
+            }
+            if (userReportsCount >= 5) {
+                const b2 = document.getElementById('badge-2');
+                if(b2) { b2.classList.remove('badge-locked'); b2.classList.add('badge-unlocked', 'bg-blue-50'); }
+                const rankText = document.getElementById('rank-text');
+                if(rankText) rankText.textContent = "Guardian";
+            }
+            if (userReportsCount >= 10) {
+                const b3 = document.getElementById('badge-3');
+                if(b3) { b3.classList.remove('badge-locked'); b3.classList.add('badge-unlocked', 'bg-amber-50'); }
+                const rankText = document.getElementById('rank-text');
+                if(rankText) rankText.textContent = "Civic Legend";
+            }
+
+            if(reportsList) {
+                reportsList.innerHTML = '';
+                reportsHistory.slice().reverse().forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-white border p-4 rounded-xl flex justify-between items-center text-left';
+                    item.innerHTML = `
+                        <div>
+                            <p class="text-[8px] font-bold uppercase text-gray-400 tracking-widest">${r.cat}</p>
+                            <p class="text-xs font-bold text-[#1d3557]">${r.desc.substring(0, 30)}...</p>
+                        </div>
+                        <span class="text-[8px] font-bold text-[#2d6a4f] bg-green-50 px-2 py-1 rounded-full uppercase">${r.status}</span>
+                    `;
+                    reportsList.appendChild(item);
+                });
+            }
+        }
+
+        // Charts
+        let chartsLoaded = false;
+        function initCharts() {
+            if (chartsLoaded) return;
+            chartsLoaded = true;
+            const catChartEl = document.getElementById('categoryChart');
+            const trendChartEl = document.getElementById('trendChart');
+            
+            if(catChartEl) {
+                new Chart(catChartEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Env', 'Elderly', 'Animal', 'Roads', 'Others'],
+                        datasets: [{ data: [30, 20, 25, 15, 10], backgroundColor: ['#2d6a4f', '#1d3557', '#e9c46a', '#f4a261', '#e76f51'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+                });
+            }
+            
+            if(trendChartEl) {
+                new Chart(trendChartEl, {
+                    type: 'line',
+                    data: {
+                        labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                        datasets: [{ label: 'Pulses', data: [80, 120, 110, 140, 130, 210, 190], borderColor: '#2d6a4f', tension: 0.4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

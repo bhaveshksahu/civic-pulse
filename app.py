@@ -1,0 +1,68 @@
+from flask import Flask, render_template, request, jsonify
+from gemini_classifier import classify_issue
+import uuid, json, os
+from datetime import datetime
+
+# Automatically looks in the 'templates' folder now!
+app = Flask(__name__)
+COMPLAINTS_FILE = "complaints.json"
+
+def load_complaints():
+    if os.path.exists(COMPLAINTS_FILE):
+        with open(COMPLAINTS_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+def save_complaint(data):
+    complaints = load_complaints()
+    complaints.append(data)
+    with open(COMPLAINTS_FILE, "w") as f:
+        json.dump(complaints, f, indent=2)
+
+@app.route("/")
+def index():
+    return render_template("slide.html")
+
+@app.route("/classify", methods=["POST"])
+def classify():
+    problem = request.json.get("problem", "")
+    try:
+        category = classify_issue(problem)
+        return jsonify({"category": category})
+    except Exception as e:
+        return jsonify({"category": "General Support"}), 500
+
+@app.route("/submit", methods=["POST"])
+def submit():
+    data = request.json
+    problem = data.get("problem", "")
+    category = data.get("category", "")
+    
+    # Automatically route via Groq AI if they picked the Quick Route
+    if category in ["AI Route", "Smart Route"]:
+        try:
+            category = classify_issue(problem)
+        except Exception:
+            category = "General Support"
+
+    complaint = {
+        "id": f"CP-{str(uuid.uuid4().int)[:4]}",
+        "location": data.get("location", "Unknown"),
+        "problem": problem,
+        "category": category, 
+        "timestamp": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "user": "ANONYMOUS"
+    }
+    save_complaint(complaint)
+    
+    # Return the AI-generated category and ID back to the frontend
+    return jsonify({"status": "ok", "id": complaint["id"], "category": complaint["category"]})
+
+@app.route("/complaints", methods=["GET"])
+def get_complaints():
+    complaints = load_complaints()
+    complaints.reverse()
+    return jsonify(complaints)
+
+if __name__ == "__main__":
+    app.run(debug=True)
