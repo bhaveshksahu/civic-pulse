@@ -66,6 +66,14 @@ def get_complaints():
     complaints = load_complaints()
     complaints.reverse()
     return jsonify(complaints)
+import streamlit.components.v1 as components
 
+# This opens your HTML file and displays it inside the Streamlit app
+try:
+    with open("templates/slide.html", "r", encoding="utf-8") as f:
+        html_data = f.read()
+        components.html(html_data, height=1000, scrolling=True)
+except Exception as e:
+    st.error(f"Could not load UI: {e}")
 #if __name__ == "__main__":
  #   app.run(debug=True)
