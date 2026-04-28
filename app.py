@@ -77,3 +77,13 @@ except Exception as e:
     st.error(f"Could not load UI: {e}")
 #if __name__ == "__main__":
  #   app.run(debug=True)
+# Place this after your components.html code
+st.write("---")
+st.subheader("Submit your Evidence")
+uploaded_file = st.file_uploader("Upload a photo of the issue", type=["jpg", "png", "jpeg"])
+
+if uploaded_file is not None:
+    # This is where your backend logic from gemini_classifier comes in
+    st.info("Processing image with AI...")
+    # example: result = classify_issue(uploaded_file)
+    st.success("Image received! Our team is on the way.")
