@@ -2,3 +2,4 @@ streamlit
 flask
 firebase-admin
 google-generativeai
+groq
